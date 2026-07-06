@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="4dp"
+        android:text="No devices connected"
+        android:textSize="13sp"
+        android:textColor="@color/status_text" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="Waiting for an opponent…"
+        android:textSize="16sp"
+        android:textColor="@color/primary_text" />
+
+    <!-- 3x3 grid using nested LinearLayouts -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="16dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn00"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn01"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn02"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn10"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn11"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn12"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn20"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn21"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+
+            <Button
+                android:id="@+id/btn22"
+                style="@style/TicTacToeCell"
+                android:textSize="32sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnReset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:enabled="false"
+        android:text="@string/reset_game" />
+
+</LinearLayout>
