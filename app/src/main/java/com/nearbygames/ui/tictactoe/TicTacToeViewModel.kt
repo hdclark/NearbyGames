@@ -31,6 +31,56 @@ class TicTacToeViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val gson = Gson()
 
+    private val connectionListener = object : NearbyConnectionsManager.ConnectionStateListener {
+        override fun onConnected(endpointId: String, endpointName: String) {
+            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
+            handleNewOpponent(endpointId, endpointName)
+        }
+
+        override fun onDisconnected(endpointId: String) {
+            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
+            if (endpointId == opponentEndpointId) {
+                opponentEndpointId = null
+                val endedState = _gameState.value?.copy(gameActive = false)
+                _gameState.postValue(endedState)
+                _statusMessage.postValue("Opponent disconnected.  Waiting for a new opponent…")
+            }
+        }
+    }
+
+    private val messageListener = object : NearbyConnectionsManager.MessageListener {
+        override fun onMessage(fromEndpointId: String, message: NearbyMessage) {
+            when (message.type) {
+                NearbyMessageType.TICTACTOE_INIT -> {
+                    val init = gson.fromJson(message.payload, TicTacToeInit::class.java)
+                    opponentEndpointId = fromEndpointId
+                    applyInit(init.xDeviceId, init.oDeviceId)
+                }
+                NearbyMessageType.TICTACTOE_MOVE -> {
+                    if (fromEndpointId != opponentEndpointId) return
+                    val move = gson.fromJson(message.payload, TicTacToeMove::class.java)
+                    val state = _gameState.value ?: return
+                    if (!state.gameActive || state.winner != null) return
+                    val newBoard = state.board.toMutableList().also { it[move.position] = move.symbol }
+                    val winner = checkWinner(newBoard)
+                    val newState = state.copy(
+                        board = newBoard,
+                        currentPlayer = if (move.symbol == "X") "O" else "X",
+                        winner = winner,
+                        xScore = if (winner == "X") state.xScore + 1 else state.xScore,
+                        oScore = if (winner == "O") state.oScore + 1 else state.oScore
+                    )
+                    _gameState.postValue(newState)
+                    updateStatus(newState)
+                }
+                NearbyMessageType.TICTACTOE_RESET -> {
+                    if (fromEndpointId != opponentEndpointId) return
+                    startFreshBoard()
+                }
+            }
+        }
+    }
+
     // ---- Lifecycle --------------------------------------------------------------------------
 
     init {
@@ -200,55 +250,4 @@ class TicTacToeViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    // ---- Nearby listeners -------------------------------------------------------------------
-
-    private val connectionListener = object : NearbyConnectionsManager.ConnectionStateListener {
-        override fun onConnected(endpointId: String, endpointName: String) {
-            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
-            handleNewOpponent(endpointId, endpointName)
-        }
-
-        override fun onDisconnected(endpointId: String) {
-            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
-            if (endpointId == opponentEndpointId) {
-                opponentEndpointId = null
-                val endedState = _gameState.value?.copy(gameActive = false)
-                _gameState.postValue(endedState)
-                _statusMessage.postValue("Opponent disconnected.  Waiting for a new opponent…")
-            }
-        }
-    }
-
-    private val messageListener = object : NearbyConnectionsManager.MessageListener {
-        override fun onMessage(fromEndpointId: String, message: NearbyMessage) {
-            when (message.type) {
-                NearbyMessageType.TICTACTOE_INIT -> {
-                    val init = gson.fromJson(message.payload, TicTacToeInit::class.java)
-                    opponentEndpointId = fromEndpointId
-                    applyInit(init.xDeviceId, init.oDeviceId)
-                }
-                NearbyMessageType.TICTACTOE_MOVE -> {
-                    if (fromEndpointId != opponentEndpointId) return
-                    val move = gson.fromJson(message.payload, TicTacToeMove::class.java)
-                    val state = _gameState.value ?: return
-                    if (!state.gameActive || state.winner != null) return
-                    val newBoard = state.board.toMutableList().also { it[move.position] = move.symbol }
-                    val winner = checkWinner(newBoard)
-                    val newState = state.copy(
-                        board = newBoard,
-                        currentPlayer = if (move.symbol == "X") "O" else "X",
-                        winner = winner,
-                        xScore = if (winner == "X") state.xScore + 1 else state.xScore,
-                        oScore = if (winner == "O") state.oScore + 1 else state.oScore
-                    )
-                    _gameState.postValue(newState)
-                    updateStatus(newState)
-                }
-                NearbyMessageType.TICTACTOE_RESET -> {
-                    if (fromEndpointId != opponentEndpointId) return
-                    startFreshBoard()
-                }
-            }
-        }
-    }
 }

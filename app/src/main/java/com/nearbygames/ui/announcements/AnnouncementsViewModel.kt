@@ -23,6 +23,33 @@ class AnnouncementsViewModel(application: Application) : AndroidViewModel(applic
 
     private val gson = Gson()
 
+    private val connectionListener = object : NearbyConnectionsManager.ConnectionStateListener {
+        override fun onConnected(endpointId: String, endpointName: String) {
+            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
+            sendSyncTo(endpointId)
+        }
+
+        override fun onDisconnected(endpointId: String) {
+            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
+        }
+    }
+
+    private val messageListener = object : NearbyConnectionsManager.MessageListener {
+        override fun onMessage(fromEndpointId: String, message: NearbyMessage) {
+            when (message.type) {
+                NearbyMessageType.ANNOUNCEMENT -> {
+                    val a = gson.fromJson(message.payload, Announcement::class.java)
+                    mergeAndSave(listOf(a))
+                }
+                NearbyMessageType.ANNOUNCEMENT_SYNC -> {
+                    val type = object : TypeToken<List<Announcement>>() {}.type
+                    val list: List<Announcement> = gson.fromJson(message.payload, type)
+                    mergeAndSave(list)
+                }
+            }
+        }
+    }
+
     // ---- Lifecycle --------------------------------------------------------------------------
 
     init {
@@ -101,33 +128,6 @@ class AnnouncementsViewModel(application: Application) : AndroidViewModel(applic
     }
 
     // ---- Nearby listeners -------------------------------------------------------------------
-
-    private val connectionListener = object : NearbyConnectionsManager.ConnectionStateListener {
-        override fun onConnected(endpointId: String, endpointName: String) {
-            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
-            sendSyncTo(endpointId)
-        }
-
-        override fun onDisconnected(endpointId: String) {
-            _connectedCount.postValue(NearbyConnectionsManager.getConnectedEndpoints().size)
-        }
-    }
-
-    private val messageListener = object : NearbyConnectionsManager.MessageListener {
-        override fun onMessage(fromEndpointId: String, message: NearbyMessage) {
-            when (message.type) {
-                NearbyMessageType.ANNOUNCEMENT -> {
-                    val a = gson.fromJson(message.payload, Announcement::class.java)
-                    mergeAndSave(listOf(a))
-                }
-                NearbyMessageType.ANNOUNCEMENT_SYNC -> {
-                    val type = object : TypeToken<List<Announcement>>() {}.type
-                    val list: List<Announcement> = gson.fromJson(message.payload, type)
-                    mergeAndSave(list)
-                }
-            }
-        }
-    }
 
     companion object {
         private const val MAX_MESSAGES = 10
