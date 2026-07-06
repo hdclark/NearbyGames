@@ -69,8 +69,9 @@ class DrawingViewModel(application: Application) : AndroidViewModel(application)
 
     private fun mergeStrokes(incoming: List<DrawingStroke>) {
         val current = _strokes.value?.toMutableList() ?: mutableListOf()
+        val existingIds = current.mapTo(HashSet()) { it.id }
         for (stroke in incoming) {
-            if (current.none { it.id == stroke.id }) current.add(stroke)
+            if (existingIds.add(stroke.id)) current.add(stroke)
         }
         _strokes.postValue(current.sortedBy { it.timestamp })
     }
@@ -105,8 +106,12 @@ class DrawingViewModel(application: Application) : AndroidViewModel(application)
                     mergeStrokes(listOf(stroke))
                 }
                 NearbyMessageType.DRAWING_CLEAR -> {
-                    // Conflict resolution: clear timestamp wins — remove strokes at or before it
-                    val clearTs = message.payload.toLongOrNull() ?: message.timestamp
+                    // Conflict resolution: clear timestamp wins — remove strokes at or before it.
+                    // Log a warning if the payload is malformed; fall back to the message timestamp.
+                    val clearTs = message.payload.toLongOrNull() ?: run {
+                        android.util.Log.w("DrawingViewModel", "DRAWING_CLEAR payload is not a long: '${message.payload}'; using message timestamp")
+                        message.timestamp
+                    }
                     _strokes.postValue(
                         (_strokes.value ?: emptyList()).filter { it.timestamp > clearTs }
                     )

@@ -41,18 +41,15 @@
 
             <Button
                 android:id="@+id/btn00"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn01"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn02"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
         </LinearLayout>
 
         <LinearLayout
@@ -62,18 +59,15 @@
 
             <Button
                 android:id="@+id/btn10"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn11"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn12"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
         </LinearLayout>
 
         <LinearLayout
@@ -83,18 +77,15 @@
 
             <Button
                 android:id="@+id/btn20"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn21"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
 
             <Button
                 android:id="@+id/btn22"
-                style="@style/TicTacToeCell"
-                android:textSize="32sp" />
+                style="@style/TicTacToeCell" />
         </LinearLayout>
     </LinearLayout>
 

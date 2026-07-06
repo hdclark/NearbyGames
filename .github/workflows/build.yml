@@ -11,6 +11,9 @@ jobs:
     name: Build Debug APK
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,7 +33,7 @@ jobs:
 
       # Accept all Android SDK licences (runner image ships with the SDK)
       - name: Accept Android SDK licences
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
       # Make sure the exact platform + build-tools needed by the project are present
       - name: Install required Android SDK components

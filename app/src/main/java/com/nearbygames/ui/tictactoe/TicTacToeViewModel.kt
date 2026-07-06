@@ -115,6 +115,8 @@ class TicTacToeViewModel(application: Application) : AndroidViewModel(applicatio
         opponentEndpointId = endpointId
 
         val myId = DeviceIdManager.getDeviceId(getApplication())
+        // Both device IDs are v4 UUIDs (same fixed format), so lexicographic
+        // ordering produces a deterministic and consistent tiebreak.
         if (myId < endpointId) {
             // We initiate: randomly assign X / O
             val weAreX = Random.nextBoolean()

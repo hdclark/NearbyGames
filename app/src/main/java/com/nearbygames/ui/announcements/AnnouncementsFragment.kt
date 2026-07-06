@@ -35,9 +35,15 @@ class AnnouncementsFragment : Fragment() {
         }
         binding.rvAnnouncements.adapter = adapter
 
+        var previousCount = 0
         viewModel.announcements.observe(viewLifecycleOwner) { list ->
-            adapter.submitList(list.sortedBy { it.timestamp })
-            if (list.isNotEmpty()) binding.rvAnnouncements.scrollToPosition(adapter.itemCount - 1)
+            val sorted = list.sortedBy { it.timestamp }
+            adapter.submitList(sorted)
+            // Only auto-scroll when new messages arrive, not on a sync re-sort
+            if (sorted.size > previousCount) {
+                binding.rvAnnouncements.scrollToPosition(sorted.size - 1)
+            }
+            previousCount = sorted.size
         }
 
         viewModel.connectedCount.observe(viewLifecycleOwner) { count ->

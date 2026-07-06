@@ -63,8 +63,9 @@ class AnnouncementsViewModel(application: Application) : AndroidViewModel(applic
     /** Merge [incoming] with the current list, deduplicate by ID, keep latest 10. */
     private fun mergeAndSave(incoming: List<Announcement>) {
         val current = _announcements.value?.toMutableList() ?: mutableListOf()
+        val existingIds = current.mapTo(HashSet()) { it.id }
         for (a in incoming) {
-            if (current.none { it.id == a.id }) current.add(a)
+            if (existingIds.add(a.id)) current.add(a)
         }
         val merged = current.sortedByDescending { it.timestamp }.take(MAX_MESSAGES)
         _announcements.postValue(merged)
