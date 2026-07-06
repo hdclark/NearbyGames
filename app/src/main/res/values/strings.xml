@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NearbyGames</string>
+
+    <!-- Navigation labels -->
+    <string name="nav_announcements">Announce</string>
+    <string name="nav_tictactoe">Tic-Tac-Toe</string>
+    <string name="nav_drawing">Draw</string>
+
+    <!-- Announcements -->
+    <string name="hint_message">Type a message…</string>
+    <string name="send">Send</string>
+
+    <!-- Tic-Tac-Toe -->
+    <string name="reset_game">New Game</string>
+
+    <!-- Drawing -->
+    <string name="clear">Clear</string>
+    <string name="color_black">Black</string>
+    <string name="color_red">Red</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_green">Green</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_white">White (eraser)</string>
+    <string name="brush_small">Small brush</string>
+    <string name="brush_medium">Medium brush</string>
+    <string name="brush_large">Large brush</string>
+</resources>

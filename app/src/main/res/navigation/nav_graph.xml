@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/announcementsFragment">
+
+    <fragment
+        android:id="@+id/announcementsFragment"
+        android:name="com.nearbygames.ui.announcements.AnnouncementsFragment"
+        android:label="@string/nav_announcements" />
+
+    <fragment
+        android:id="@+id/ticTacToeFragment"
+        android:name="com.nearbygames.ui.tictactoe.TicTacToeFragment"
+        android:label="@string/nav_tictactoe" />
+
+    <fragment
+        android:id="@+id/drawingFragment"
+        android:name="com.nearbygames.ui.drawing.DrawingFragment"
+        android:label="@string/nav_drawing" />
+
+</navigation>

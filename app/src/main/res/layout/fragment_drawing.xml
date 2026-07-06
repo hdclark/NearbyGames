@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Status bar -->
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="4dp"
+        android:text="No devices connected"
+        android:textSize="13sp"
+        android:textColor="@color/status_text" />
+
+    <!-- Drawing canvas fills remaining space -->
+    <com.nearbygames.ui.drawing.DrawingView
+        android:id="@+id/drawingView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Toolbar row: colours -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <ImageButton
+                android:id="@+id/btnColorBlack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#000000"
+                android:contentDescription="@string/color_black"
+                android:src="@drawable/ic_circle" />
+
+            <ImageButton
+                android:id="@+id/btnColorRed"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#E53935"
+                android:contentDescription="@string/color_red"
+                android:src="@drawable/ic_circle" />
+
+            <ImageButton
+                android:id="@+id/btnColorBlue"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#1E88E5"
+                android:contentDescription="@string/color_blue"
+                android:src="@drawable/ic_circle" />
+
+            <ImageButton
+                android:id="@+id/btnColorGreen"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#43A047"
+                android:contentDescription="@string/color_green"
+                android:src="@drawable/ic_circle" />
+
+            <ImageButton
+                android:id="@+id/btnColorYellow"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#FFC107"
+                android:contentDescription="@string/color_yellow"
+                android:src="@drawable/ic_circle" />
+
+            <ImageButton
+                android:id="@+id/btnColorWhite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:backgroundTint="#FFFFFF"
+                android:contentDescription="@string/color_white"
+                android:src="@drawable/ic_circle"
+                android:background="@drawable/circle_outline" />
+
+            <!-- Separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="30dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="#CCCCCC" />
+
+            <!-- Brush sizes -->
+            <ImageButton
+                android:id="@+id/btnBrushSmall"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:contentDescription="@string/brush_small"
+                android:src="@drawable/ic_brush_small"
+                android:backgroundTint="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnBrushMedium"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:contentDescription="@string/brush_medium"
+                android:src="@drawable/ic_brush_medium"
+                android:backgroundTint="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnBrushLarge"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="2dp"
+                android:contentDescription="@string/brush_large"
+                android:src="@drawable/ic_brush_large"
+                android:backgroundTint="@android:color/transparent" />
+
+            <!-- Separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="30dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="#CCCCCC" />
+
+            <!-- Clear button -->
+            <Button
+                android:id="@+id/btnClear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/clear" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+</LinearLayout>

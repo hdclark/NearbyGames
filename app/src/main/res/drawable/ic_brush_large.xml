@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Large dot — represents a large brush tip -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#212121" />
+    <size android:width="28dp" android:height="28dp" />
+</shape>

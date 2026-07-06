@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/announcementsFragment"
+        android:icon="@android:drawable/ic_menu_send"
+        android:title="@string/nav_announcements" />
+
+    <item
+        android:id="@+id/ticTacToeFragment"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="@string/nav_tictactoe" />
+
+    <item
+        android:id="@+id/drawingFragment"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="@string/nav_drawing" />
+
+</menu>
