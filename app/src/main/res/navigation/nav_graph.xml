@@ -19,4 +19,14 @@
         android:name="com.nearbygames.ui.drawing.DrawingFragment"
         android:label="@string/nav_drawing" />
 
+    <fragment
+        android:id="@+id/rpsFragment"
+        android:name="com.nearbygames.ui.rps.RockPaperScissorsFragment"
+        android:label="@string/nav_rps" />
+
+    <fragment
+        android:id="@+id/numbersScrapFragment"
+        android:name="com.nearbygames.ui.numbersscrap.NumbersScrapFragment"
+        android:label="@string/nav_numbers_scrap" />
+
 </navigation>

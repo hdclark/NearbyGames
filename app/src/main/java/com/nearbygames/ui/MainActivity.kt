@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -16,10 +18,13 @@ import com.nearbygames.databinding.ActivityMainBinding
 import com.nearbygames.nearby.NearbyConnectionsManager
 import com.nearbygames.utils.DeviceIdManager
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NearbyConnectionsManager.ConnectionStateListener,
+    NearbyConnectionsManager.RadioStateListener {
 
     private lateinit var binding: ActivityMainBinding
-    private var nearbyStarted = false
+
+    private val countdownHandler = Handler(Looper.getMainLooper())
+    private var countdownRunnable: Runnable? = null
 
     // ---- Permission list (varies by API level) ----------------------------------------------
 
@@ -66,21 +71,35 @@ class MainActivity : AppCompatActivity() {
 
         Log.d(TAG, "Device ID: ${DeviceIdManager.getDeviceId(this)}")
         Log.d(TAG, "Device name: ${DeviceIdManager.getDeviceName(this)}")
+
+        binding.btnAdvertise.setOnClickListener { onAdvertiseClicked() }
+        binding.btnDiscover.setOnClickListener { onDiscoverClicked() }
+        binding.btnDisconnect.setOnClickListener { onDisconnectClicked() }
+
+        updateStatusText()
     }
 
     override fun onStart() {
         super.onStart()
-        if (allPermissionsGranted()) {
-            startNearby()
-        } else {
+        NearbyConnectionsManager.addConnectionListener(this)
+        NearbyConnectionsManager.addRadioStateListener(this)
+        if (!allPermissionsGranted()) {
             requestPermissions()
         }
+        updateStatusText()
     }
 
     override fun onStop() {
         super.onStop()
-        NearbyConnectionsManager.stop()
-        nearbyStarted = false
+        NearbyConnectionsManager.removeConnectionListener(this)
+        NearbyConnectionsManager.removeRadioStateListener(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cancelCountdown()
+        // Closing the app disconnects everything and stops advertising/discovery.
+        NearbyConnectionsManager.disconnectAll()
     }
 
     // ---- Permission handling ----------------------------------------------------------------
@@ -108,7 +127,8 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                startNearby()
+                Toast.makeText(this, "All permissions granted.", Toast.LENGTH_SHORT).show()
+                pendingAction?.let { it() }
             } else {
                 Toast.makeText(
                     this,
@@ -116,19 +136,108 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+            pendingAction = null
+        }
+    }
+
+    /** Action to run once permissions are granted, if the user tapped a button before granting. */
+    private var pendingAction: (() -> Unit)? = null
+
+    /** Runs [action] immediately if permissions are already granted, otherwise requests them first. */
+    private fun runWithPermissions(action: () -> Unit) {
+        if (allPermissionsGranted()) {
+            action()
+        } else {
+            pendingAction = action
+            requestPermissions()
         }
     }
 
     // ---- Nearby Connections -----------------------------------------------------------------
 
-    private fun startNearby() {
-        if (nearbyStarted) return
-        nearbyStarted = true
-        NearbyConnectionsManager.start()
+    private fun onAdvertiseClicked() {
+        runWithPermissions {
+            NearbyConnectionsManager.advertiseFor(ADVERTISE_DURATION_MS)
+            startCountdown(ADVERTISE_DURATION_MS, "Advertising")
+        }
+    }
+
+    private fun onDiscoverClicked() {
+        runWithPermissions {
+            NearbyConnectionsManager.discoverFor(DISCOVER_DURATION_MS)
+            startCountdown(DISCOVER_DURATION_MS, "Discovering")
+        }
+    }
+
+    private fun onDisconnectClicked() {
+        cancelCountdown()
+        NearbyConnectionsManager.disconnectAll()
+        updateStatusText()
+    }
+
+    private fun startCountdown(durationMs: Long, label: String) {
+        cancelCountdown()
+        val endAt = System.currentTimeMillis() + durationMs
+        val tick = object : Runnable {
+            override fun run() {
+                val remainingMs = endAt - System.currentTimeMillis()
+                if (remainingMs <= 0) {
+                    countdownRunnable = null
+                    updateStatusText()
+                    return
+                }
+                val remainingSec = (remainingMs + 999) / 1000
+                binding.tvGlobalStatus.text = "$label… ${remainingSec}s remaining"
+                countdownRunnable = this
+                countdownHandler.postDelayed(this, 500)
+            }
+        }
+        countdownRunnable = tick
+        countdownHandler.post(tick)
+    }
+
+    private fun cancelCountdown() {
+        countdownRunnable?.let { countdownHandler.removeCallbacks(it) }
+        countdownRunnable = null
+    }
+
+    private fun updateStatusText() {
+        val count = NearbyConnectionsManager.getConnectedEndpoints().size
+        binding.tvGlobalStatus.text = when {
+            count > 0 -> "$count device(s) connected"
+            NearbyConnectionsManager.isAdvertising() -> "Advertising…"
+            NearbyConnectionsManager.isDiscovering() -> "Discovering…"
+            else -> "Not connected"
+        }
+    }
+
+    // ---- NearbyConnectionsManager.ConnectionStateListener ------------------------------------
+
+    override fun onConnected(endpointId: String, endpointName: String) {
+        runOnUiThread {
+            cancelCountdown()
+            updateStatusText()
+        }
+    }
+
+    override fun onDisconnected(endpointId: String) {
+        runOnUiThread { updateStatusText() }
+    }
+
+    // ---- NearbyConnectionsManager.RadioStateListener ----------------------------------------
+
+    override fun onAdvertisingStateChanged(isAdvertising: Boolean) {
+        if (!isAdvertising) runOnUiThread { updateStatusText() }
+    }
+
+    override fun onDiscoveryStateChanged(isDiscovering: Boolean) {
+        if (!isDiscovering) runOnUiThread { updateStatusText() }
     }
 
     companion object {
         private const val TAG = "MainActivity"
         private const val REQUEST_CODE_PERMISSIONS = 42
+        private const val ADVERTISE_DURATION_MS = 60_000L
+        private const val DISCOVER_DURATION_MS = 20_000L
     }
 }

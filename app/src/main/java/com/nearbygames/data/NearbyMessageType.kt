@@ -15,4 +15,10 @@ object NearbyMessageType {
     const val DRAWING_STROKE = "DRAWING_STROKE"
     const val DRAWING_CLEAR = "DRAWING_CLEAR"
     const val DRAWING_SYNC = "DRAWING_SYNC"
+
+    // Rock-Paper-Scissors game
+    const val RPS_CHOICE = "RPS_CHOICE"
+
+    // Numbers Scrap game
+    const val NUMBERS_SCRAP_CHOICE = "NUMBERS_SCRAP_CHOICE"
 }
