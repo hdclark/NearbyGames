@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="4dp"
+        android:text="No devices connected"
+        android:textSize="13sp"
+        android:textColor="@color/status_text" />
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="Waiting for an opponent…"
+        android:textSize="20sp"
+        android:textColor="@color/primary_text" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/btnRock"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_margin="6dp"
+            android:textSize="36sp"
+            android:text="@string/rps_rock" />
+
+        <Button
+            android:id="@+id/btnPaper"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_margin="6dp"
+            android:textSize="36sp"
+            android:text="@string/rps_paper" />
+
+        <Button
+            android:id="@+id/btnScissors"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_margin="6dp"
+            android:textSize="36sp"
+            android:text="@string/rps_scissors" />
+    </LinearLayout>
+
+</LinearLayout>

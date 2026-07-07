@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The app theme is DayNight, so the window background switches to dark automatically.
+        These overrides brighten text that would otherwise stay dark-on-dark (e.g. the
+        Announcements / messages minigame) when the device is in dark mode.
+    -->
+    <color name="primary_text">#F5F5F5</color>
+    <color name="secondary_text">#BDBDBD</color>
+    <color name="status_text">#64B5F6</color>
+</resources>

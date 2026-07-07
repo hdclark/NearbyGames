@@ -1,6 +1,8 @@
 package com.nearbygames.nearby
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
@@ -12,7 +14,11 @@ import com.nearbygames.utils.DeviceIdManager
  * Singleton that owns all Nearby Connections logic.
  *
  * Call [init] once (e.g. from Application or Activity.onCreate).
- * Call [start] when the app comes to the foreground and [stop] when it leaves.
+ *
+ * Advertising and discovery are explicit, time-bounded, user-triggered actions
+ * (see [advertiseFor] and [discoverFor]) rather than always-on background behaviour.
+ * Call [disconnectAll] to tear down every connection (also done automatically when
+ * the app is closed).
  *
  * Uses the P2P_CLUSTER strategy so that every running instance automatically
  * connects to every other running instance on the same local network / Bluetooth.
@@ -25,6 +31,13 @@ object NearbyConnectionsManager {
 
     private val gson = Gson()
     private var appContext: Context? = null
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var advertisingTimeoutRunnable: Runnable? = null
+    private var discoveryTimeoutRunnable: Runnable? = null
+
+    private var isAdvertising = false
+    private var isDiscovering = false
 
     // endpointId -> display name (only confirmed, live connections)
     private val connectedEndpoints = mutableMapOf<String, String>()
@@ -43,8 +56,15 @@ object NearbyConnectionsManager {
         fun onDisconnected(endpointId: String)
     }
 
+    /** Reports start/stop of advertising or discovery, e.g. so the UI can update its buttons. */
+    interface RadioStateListener {
+        fun onAdvertisingStateChanged(isAdvertising: Boolean)
+        fun onDiscoveryStateChanged(isDiscovering: Boolean)
+    }
+
     private val messageListeners = mutableListOf<MessageListener>()
     private val connectionListeners = mutableListOf<ConnectionStateListener>()
+    private val radioStateListeners = mutableListOf<RadioStateListener>()
 
     // ---- Public API -------------------------------------------------------------------------
 
@@ -52,24 +72,102 @@ object NearbyConnectionsManager {
         appContext = context.applicationContext
     }
 
-    /** Start advertising and discovering.  Idempotent — safe to call multiple times. */
-    fun start() {
-        startAdvertising()
-        startDiscovery()
+    /**
+     * Start advertising this device for [durationMs] milliseconds so a nearby device can
+     * discover and connect to it. Automatically stops after the duration elapses, or sooner
+     * if [stopAdvertising] is called.
+     */
+    fun advertiseFor(durationMs: Long) {
+        val ctx = appContext ?: return
+        stopAdvertising()
+        val localName = DeviceIdManager.getDeviceName(ctx)
+        val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
+        Nearby.getConnectionsClient(ctx)
+            .startAdvertising(localName, SERVICE_ID, connectionLifecycleCallback, options)
+            .addOnSuccessListener {
+                Log.d(TAG, "Advertising started as \"$localName\"")
+                isAdvertising = true
+                notifyAdvertisingState(true)
+            }
+            .addOnFailureListener { e -> Log.e(TAG, "Advertising failed: ${e.message}") }
+
+        val timeoutRunnable = Runnable { stopAdvertising() }
+        advertisingTimeoutRunnable = timeoutRunnable
+        mainHandler.postDelayed(timeoutRunnable, durationMs)
     }
 
-    /** Stop advertising, discovering, and disconnect all endpoints. */
-    fun stop() {
-        val ctx = appContext ?: return
+    /** Stop advertising immediately. Safe to call even if not currently advertising. */
+    fun stopAdvertising() {
+        val ctx = appContext
+        advertisingTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        advertisingTimeoutRunnable = null
+        if (!isAdvertising) return
+        isAdvertising = false
         try {
-            Nearby.getConnectionsClient(ctx).stopAdvertising()
-            Nearby.getConnectionsClient(ctx).stopDiscovery()
-            Nearby.getConnectionsClient(ctx).stopAllEndpoints()
+            ctx?.let { Nearby.getConnectionsClient(it).stopAdvertising() }
         } catch (e: Exception) {
-            Log.w(TAG, "stop: ${e.message}")
+            Log.w(TAG, "stopAdvertising: ${e.message}")
         }
+        notifyAdvertisingState(false)
+    }
+
+    /**
+     * Discover nearby advertising devices for [durationMs] milliseconds, connecting to the
+     * first one found. Automatically stops after the duration elapses, or sooner once a
+     * connection succeeds or [stopDiscovery] is called.
+     */
+    fun discoverFor(durationMs: Long) {
+        val ctx = appContext ?: return
+        stopDiscovery()
+        val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
+        Nearby.getConnectionsClient(ctx)
+            .startDiscovery(SERVICE_ID, endpointDiscoveryCallback, options)
+            .addOnSuccessListener {
+                Log.d(TAG, "Discovery started")
+                isDiscovering = true
+                notifyDiscoveryState(true)
+            }
+            .addOnFailureListener { e -> Log.e(TAG, "Discovery failed: ${e.message}") }
+
+        val timeoutRunnable = Runnable { stopDiscovery() }
+        discoveryTimeoutRunnable = timeoutRunnable
+        mainHandler.postDelayed(timeoutRunnable, durationMs)
+    }
+
+    /** Stop discovery immediately. Safe to call even if not currently discovering. */
+    fun stopDiscovery() {
+        val ctx = appContext
+        discoveryTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        discoveryTimeoutRunnable = null
+        if (!isDiscovering) return
+        isDiscovering = false
+        try {
+            ctx?.let { Nearby.getConnectionsClient(it).stopDiscovery() }
+        } catch (e: Exception) {
+            Log.w(TAG, "stopDiscovery: ${e.message}")
+        }
+        notifyDiscoveryState(false)
+    }
+
+    fun isAdvertising(): Boolean = isAdvertising
+    fun isDiscovering(): Boolean = isDiscovering
+
+    /** Stop advertising/discovery and disconnect every connected endpoint. Call on app close. */
+    fun disconnectAll() {
+        stopAdvertising()
+        stopDiscovery()
+        val ctx = appContext
+        try {
+            ctx?.let { Nearby.getConnectionsClient(it).stopAllEndpoints() }
+        } catch (e: Exception) {
+            Log.w(TAG, "disconnectAll: ${e.message}")
+        }
+        val disconnectedIds = connectedEndpoints.keys.toList()
         connectedEndpoints.clear()
         pendingEndpoints.clear()
+        disconnectedIds.forEach { id ->
+            connectionListeners.toList().forEach { it.onDisconnected(id) }
+        }
     }
 
     fun sendMessage(endpointId: String, message: NearbyMessage) {
@@ -101,28 +199,25 @@ object NearbyConnectionsManager {
         connectionListeners.remove(listener)
     }
 
+    fun addRadioStateListener(listener: RadioStateListener) {
+        if (listener !in radioStateListeners) radioStateListeners.add(listener)
+    }
+
+    fun removeRadioStateListener(listener: RadioStateListener) {
+        radioStateListeners.remove(listener)
+    }
+
     /** Returns a snapshot of currently connected endpointId → name pairs. */
     fun getConnectedEndpoints(): Map<String, String> = connectedEndpoints.toMap()
 
     // ---- Private helpers --------------------------------------------------------------------
 
-    private fun startAdvertising() {
-        val ctx = appContext ?: return
-        val localName = DeviceIdManager.getDeviceName(ctx)
-        val options = AdvertisingOptions.Builder().setStrategy(STRATEGY).build()
-        Nearby.getConnectionsClient(ctx)
-            .startAdvertising(localName, SERVICE_ID, connectionLifecycleCallback, options)
-            .addOnSuccessListener { Log.d(TAG, "Advertising started as \"$localName\"") }
-            .addOnFailureListener { e -> Log.e(TAG, "Advertising failed: ${e.message}") }
+    private fun notifyAdvertisingState(advertising: Boolean) {
+        radioStateListeners.toList().forEach { it.onAdvertisingStateChanged(advertising) }
     }
 
-    private fun startDiscovery() {
-        val ctx = appContext ?: return
-        val options = DiscoveryOptions.Builder().setStrategy(STRATEGY).build()
-        Nearby.getConnectionsClient(ctx)
-            .startDiscovery(SERVICE_ID, endpointDiscoveryCallback, options)
-            .addOnSuccessListener { Log.d(TAG, "Discovery started") }
-            .addOnFailureListener { e -> Log.e(TAG, "Discovery failed: ${e.message}") }
+    private fun notifyDiscoveryState(discovering: Boolean) {
+        radioStateListeners.toList().forEach { it.onDiscoveryStateChanged(discovering) }
     }
 
     private fun requestConnectionTo(endpointId: String, remoteEndpointName: String) {
@@ -158,6 +253,8 @@ object NearbyConnectionsManager {
             if (result.status.isSuccess) {
                 connectedEndpoints[endpointId] = name
                 Log.d(TAG, "Connected to \"$name\" ($endpointId). Total: ${connectedEndpoints.size}")
+                // A discovered device connected — no need to keep scanning.
+                if (isDiscovering) stopDiscovery()
                 connectionListeners.toList().forEach { it.onConnected(endpointId, name) }
             } else {
                 Log.w(TAG, "Connection to $endpointId failed: ${result.status.statusMessage}")
